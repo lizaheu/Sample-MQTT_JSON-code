@@ -46,14 +46,12 @@ public class MainActivity extends AppCompatActivity {
     public void btnDecode(View v) {
         //                 Prepare message publish to MQTT Server
         //===============================================================================
-        // 000001 = Login Action
-        // 000000000000000000000000 = Researve
-        // 124c6565205761682050656e67 = 12 Length of Username (First 2 ASCll character)
-        //                            = 4c6565205761682050656e67 Username
-        // 066c656f313233 = 06 Length of password (First 2 ASCll character)
-        //                = 6c656f313233 Password
-        String sendSubscibeData = "{\"command\": \"000005\", \"reserve\": \"000000000000000000000000\", " +
-                "\"username\": \"124c6565205761682050656e67\", \"password\": \"066c656f313233\"}";
+        // 303030303031 = Login Action
+        // 303030303030303030303030303030303030303030303030 = Researve
+        // 4c6565205761682050656e67 = 4c6565205761682050656e67 Username
+        // 6c656f313233 = 6c656f313233 Password
+        String sendSubscibeData = "{\"command\": \"303030303031\", \"reserve\": \"303030303030303030303030303030303030303030303030\", " +
+                "\"username\": \"4c6565205761682050656e67\", \"password\": \"6c656f313233\"}";
 
         // Alert show what data publish to server
         AlertDialog.Builder publishBuilder = new AlertDialog.Builder(this);
@@ -78,35 +76,33 @@ public class MainActivity extends AppCompatActivity {
 
         //             Receive data publish from MQTT Server and split it
         //=================================================================================
-        // 000005 = Respond from server
-        // 000000000000000000000000 = Reserve
-        // 124c6565205761682050656e67 = 12 Length of Username (First 2 ASCll character)
-        //                            = 4c6565205761682050656e67 Username
+        // 303030303035 = Respond from server
+        // 303030303030303030303030303030303030303030303030 = Reserve
+        // 4c6565205761682050656e67 = 4c6565205761682050656e67 (Username)
         //
-        // 000002 = Female (Gender)
+        // 303032 = Female (Gender)
         //
         // 525344 = RSD (Programme Code)
         //
-        // 000003 = 3 (Year of study)
+        // 303033 = 3 (Year of study)
         //
-        // 066c656f313233 = 06 Length of password (First 2 ASCll character)
-        //                = 6c656f313233 Password
+        // 6c656f313233 = 6c656f313233 (Password)
 
-        String receiveJsonData = "{\"command\": \"000005\", \"reserve\": \"000000000000000000000000\", \"size_of_name\": \"12\", " +
-                "\"username\": \"4c6565205761682050656e67\", \"gender\": \"000002\", " +
-                "\"programme_code\": \"525344\", \"year_of_study\": \"000003\", \"size_of_password\": \"6\", \"password\": \"6c656f313233\"}";
+        String receiveJsonData = "{\"command\": \"30303030303035\", \"reserve\": \"303030303030303030303030303030303030303030303030\", " +
+                "\"username\": \"4c6565205761682050656e67\", \"gender\": \"303032\", " +
+                "\"programme_code\": \"525344\", \"year_of_study\": \"303033\", \"password\": \"6c656f313233\"}";
         try {
             JSONObject jsonObj = new JSONObject(receiveJsonData);
-            if(jsonObj.getString("command").equals("000005")){
+            if(jsonObj.getString("command").equals("30303030303035")){
 
-                String name = Action.hexToAscii(Action.splitString(Integer.parseInt(jsonObj.getString("size_of_name")),jsonObj.getString("username")));
+                String name = Action.hexToAscii(jsonObj.getString("username"));
                 editTextName.setText(name);
                 studentDetails.setStudName(name);
 
-                if(jsonObj.getString("gender").equals("000001")){
+                if(jsonObj.getString("gender").equals("303031")){
                     radMale.setChecked(true);
                     studentDetails.setStudGender("male");
-                }else if(jsonObj.getString("gender").equals("000002")){
+                }else if(jsonObj.getString("gender").equals("303032")){
                     radFemale.setChecked(true);
                     studentDetails.setStudGender("female");
                 }else{
@@ -123,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
 
                 editTextYear.setText(jsonObj.getString("year_of_study").charAt(5)+"");
 
-                String password = Action.hexToAscii(Action.splitString(Integer.parseInt(jsonObj.getString("size_of_password")),jsonObj.getString("password")));
+                String password = Action.hexToAscii(jsonObj.getString("password"));
                 studentDetails.setStudPasword(password);
                 editTextPassword.setText(password);
             }
@@ -133,26 +129,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void btnEncode(View v) {
-        String encodeText = "{\"command\": \"00006\", \"reserve\": \"000000000000000000000000\", "; // <-- Action code 000006, reserve code 000000000000000000000000.
+        String encodeText = "{\"command\": \"30303030303036\", \"reserve\": \"303030303030303030303030303030303030303030303030\", "; // <-- Action code 000006, reserve code 000000000000000000000000.
         String name = editTextName.getText().toString();
         String password = editTextPassword.getText().toString();
         String gender = "";
         if(radMale.isChecked()){
-            gender = "000001";
+            gender = "303031";
             studentDetails.setStudGender("male");
         }else if(radFemale.isChecked()){
-            gender = "000002";
+            gender = "303032";
             studentDetails.setStudGender("female");
         }
         String programmeCode = spinner.getSelectedItem().toString();
-        String numOfYear = "00000" + editTextYear.getText().toString();
+        String numOfYear = "30303" + editTextYear.getText().toString();
 
-        //Turn ASCll name, programme code and passsword to HEX.
-        encodeText += "\"size_of_name\": " + name.length() + "\" , \"username\": " + Action.asciiToHex(name) + "\" ," +
+        encodeText += "\"username\": " + Action.asciiToHex(name) + "\" ," +
                 "\"gender\": " + gender + "\" ," +
                 "\"programme_code\": " + Action.asciiToHex(programmeCode) + "\" ," +
                 "\"year_of_study\": " + numOfYear + "\" ," +
-                "\"size_of_password\": " + password.length() + "\" , \"password\": " + Action.asciiToHex(password) + "\"}";
+                "\"password\": " + Action.asciiToHex(password) + "\"}";
 
         studentDetails.setStudName(name);
         studentDetails.setStudPasword(password);
